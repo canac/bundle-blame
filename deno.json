@@ -7,7 +7,12 @@
     "dev": "deno run --allow-env=HOME --allow-read --allow-write --allow-run --watch main.ts"
   },
   "imports": {
-    "@david/dax": "jsr:@david/dax@^0.43"
+    "@david/dax": "jsr:@david/dax@^0.43",
+    "@std/assert": "jsr:@std/assert@^1",
+    "@std/collections": "jsr:@std/collections@^1",
+    "@std/fmt": "jsr:@std/fmt@^1",
+    "@std/fs": "jsr:@std/fs@^1",
+    "@std/path": "jsr:@std/path@^1"
   },
   "fmt": {
     "lineWidth": 100
@@ -18,5 +23,8 @@
       "README.md",
       "*.ts"
     ]
+  },
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true
   }
 }
