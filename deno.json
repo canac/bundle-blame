@@ -1,0 +1,22 @@
+{
+  "name": "@canac/bundle-blame",
+  "version": "0.0.0",
+  "license": "MIT",
+  "exports": "./main.ts",
+  "tasks": {
+    "dev": "deno run --allow-env=HOME --allow-read --allow-write --allow-run --watch main.ts"
+  },
+  "imports": {
+    "@david/dax": "jsr:@david/dax@^0.43"
+  },
+  "fmt": {
+    "lineWidth": 100
+  },
+  "publish": {
+    "include": [
+      "LICENSE",
+      "README.md",
+      "*.ts"
+    ]
+  }
+}
