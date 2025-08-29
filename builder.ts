@@ -45,7 +45,7 @@ export class Builder {
 
       return [
         page,
-        sizes.reduce((total, size) => total + size, 0),
+        sizes.reduce((total: number, size: number) => total + size, 0),
       ] as const;
     });
     return Object.fromEntries(await Promise.all(pageSizePromises));
