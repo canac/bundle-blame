@@ -22,7 +22,7 @@ for (const { commit: commit } of revisions) {
 }
 
 const formatRevision = (revision: Revision): string =>
-  `"${green(revision.message)}" (${yellow(revision.commit)})`;
+  `"${green(revision.message)}" (${yellow(revision.commit.slice(0, 7))})`;
 
 for (const [revision1, revision2] of slidingWindows(revisions, 2)) {
   assert(revision1 !== undefined);
