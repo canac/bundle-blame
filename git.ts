@@ -10,10 +10,13 @@ export const getPrimaryBranch = async (): Promise<string> => {
 };
 
 /**
- * Return all the revisions from the `start` commit to HEAD, inclusive
+ * Return all the revisions from the `start` commit to HEAD, inclusive. If `start` and HEAD are on different branches,
+ * it returns the commits from the merge base to HEAD, inclusive.
  */
 export const getRevisions = async (start: string): Promise<Revision[]> => {
-  const lines = await $`git log --oneline --no-abbrev-commit ${start}..HEAD ${start}`.lines();
+  const mergeBase = await $`git merge-base ${start} HEAD`.text();
+  const lines = await $`git log --oneline --no-abbrev-commit --first-parent ${mergeBase}^..HEAD`
+    .lines();
   return lines.map((line): Revision => ({
     commit: line.slice(0, 40),
     message: line.slice(41),
