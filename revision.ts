@@ -1,5 +1,4 @@
-
 export interface Revision {
-  sha: string;
+  commit: string;
   message: string;
 }

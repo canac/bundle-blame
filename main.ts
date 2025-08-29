@@ -14,22 +14,22 @@ const builder = new Builder();
 const statsStore = new StatsStore();
 
 const revisions = await getRevisions(Deno.args[0] ?? await getPrimaryBranch());
-for (const { sha: revision } of revisions) {
-  if (await statsStore.readStats(revision) === null) {
-    await $`git switch ${revision} --detach`;
-    await statsStore.writeStats(revision, await builder.build());
+for (const { commit: commit } of revisions) {
+  if (await statsStore.readStats(commit) === null) {
+    await $`git switch ${commit} --detach`;
+    await statsStore.writeStats(commit, await builder.build());
   }
 }
 
 const formatRevision = (revision: Revision): string =>
-  `"${green(revision.message)}" (${yellow(revision.sha)})`;
+  `"${green(revision.message)}" (${yellow(revision.commit)})`;
 
 for (const [revision1, revision2] of slidingWindows(revisions, 2)) {
   assert(revision1 !== undefined);
   assert(revision2 !== undefined);
 
-  const stats1 = await statsStore.readStats(revision1.sha);
-  const stats2 = await statsStore.readStats(revision2.sha);
+  const stats1 = await statsStore.readStats(revision1.commit);
+  const stats2 = await statsStore.readStats(revision2.commit);
   assert(stats1 !== null);
   assert(stats2 !== null);
 

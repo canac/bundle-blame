@@ -15,12 +15,12 @@ export class StatsStore {
   }
 
   /**
-   * Read the stats file for a specific revision
+   * Read the stats file for a specific commit
    */
-  async readStats(revision: string): Promise<Stats | null> {
+  async readStats(commit: string): Promise<Stats | null> {
     try {
       return JSON.parse(
-        await Deno.readTextFile(join(this.#cacheDir, `${revision}.json`)),
+        await Deno.readTextFile(join(this.#cacheDir, `${commit}.json`)),
       );
     } catch (err) {
       if (err instanceof Deno.errors.NotFound) {
@@ -31,12 +31,12 @@ export class StatsStore {
   }
 
   /**
-   * Write the stats file for a specific revision
+   * Write the stats file for a specific commit
    */
-  async writeStats(revision: string, stats: Stats): Promise<void> {
+  async writeStats(commit: string, stats: Stats): Promise<void> {
     await ensureDir(this.#cacheDir);
     await Deno.writeTextFile(
-      join(this.#cacheDir, `${revision}.json`),
+      join(this.#cacheDir, `${commit}.json`),
       JSON.stringify(stats, null, 2),
     );
   }
