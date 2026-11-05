@@ -33,9 +33,19 @@ jobs:
           deno-version: v2.x
       - run: deno check src/main.ts
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno test
+
   publish:
     name: Publish
-    needs: [format, lint, typecheck]
+    needs: [format, lint, typecheck, test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:

@@ -16,19 +16,24 @@ const gzipSize = async (file: Deno.FsFile): Promise<number> => {
   return size;
 };
 
-export class Builder {
-  #dir: string;
+/**
+ * The JS files that each route loads, relative to `outDir`
+ */
+export interface BuildOutput {
+  outDir: string;
+  routes: Record<string, string[]>;
+}
+
+export abstract class Builder {
+  protected readonly dir: string;
   #packageManager: PackageManager | null = null;
 
-  /**
-   * Create a builder for the Next.js project in `dir`
-   */
   constructor(dir: string) {
-    this.#dir = dir;
+    this.dir = dir;
   }
 
   /**
-   * Install dependencies, build the Next.js project, and return the build stats
+   * Install dependencies, build the project, and return the build stats
    */
   async build(): Promise<Stats> {
     this.#packageManager ??= await this.#detectPackageManager();
@@ -36,48 +41,46 @@ export class Builder {
       throw new Error("Cannot determine package manager");
     }
 
-    await $`${this.#packageManager} install`.cwd(this.#dir);
-    await $`${this.#packageManager} run build`.cwd(this.#dir);
+    await $`${this.#packageManager} install`.cwd(this.dir);
+    const { outDir, routes } = await this.buildProject(this.#packageManager);
 
-    const nextDir = join(this.#dir, ".next");
-    const { pages } = JSON.parse(
-      await Deno.readTextFile(
-        join(nextDir, "build-manifest.json"),
-      ),
-    ) as { pages: Record<string, string[]> };
-
-    const pageSizes = new Map<string, Promise<number>>();
-    const pageSizePromises = Object.entries(pages).map(async ([page, entries]) => {
+    const fileSizes = new Map<string, Promise<number>>();
+    const routeSizePromises = Object.entries(routes).map(async ([route, files]) => {
       const sizes = await Promise.all(
-        entries.filter((file) => file.endsWith(".js")).map((file) => {
-          const cachedPageSize = pageSizes.get(file);
-          if (cachedPageSize) {
-            return cachedPageSize;
+        files.filter((file) => file.endsWith(".js")).map((file) => {
+          const cachedFileSize = fileSizes.get(file);
+          if (cachedFileSize) {
+            return cachedFileSize;
           }
 
-          const pageSize = Deno.open(join(nextDir, file)).then(gzipSize);
-          pageSizes.set(file, pageSize);
-          return pageSize;
+          const fileSize = Deno.open(join(outDir, file)).then(gzipSize);
+          fileSizes.set(file, fileSize);
+          return fileSize;
         }),
       );
 
       return [
-        page,
+        route,
         sizes.reduce((total: number, size: number) => total + size, 0),
       ] as const;
     });
-    return Object.fromEntries(await Promise.all(pageSizePromises));
+    return Object.fromEntries(await Promise.all(routeSizePromises));
   }
+
+  /**
+   * Build the project with its dependencies already installed
+   */
+  protected abstract buildProject(packageManager: PackageManager): Promise<BuildOutput>;
 
   /**
    * Determine the project's package manager
    */
   async #detectPackageManager(): Promise<PackageManager> {
-    if (await exists(join(this.#dir, "package-lock.json"))) {
+    if (await exists(join(this.dir, "package-lock.json"))) {
       return "npm";
-    } else if (await exists(join(this.#dir, "yarn.lock"))) {
+    } else if (await exists(join(this.dir, "yarn.lock"))) {
       return "yarn";
-    } else if (await exists(join(this.#dir, "pnpm-lock.yaml"))) {
+    } else if (await exists(join(this.dir, "pnpm-lock.yaml"))) {
       return "pnpm";
     } else {
       return "unknown";

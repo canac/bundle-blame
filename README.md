@@ -1,6 +1,6 @@
 # bundle-blame
 
-Track changes in Next.js bundle sizes across commits
+Track changes in Next.js and Vite bundle sizes across commits
 
 ## Installation
 

@@ -3,10 +3,29 @@ import { assert } from "@std/assert";
 import { slidingWindows } from "@std/collections";
 import { format } from "@std/fmt/bytes";
 import { blue, green, red, yellow } from "@std/fmt/colors";
-import { Builder } from "./builder.ts";
+import { join } from "@std/path";
+import type { Builder } from "./builder.ts";
 import { checkout, getPrimaryBranch, getRevisions, getWorktree } from "./git.ts";
+import { NextBuilder } from "./next_builder.ts";
 import type { Revision } from "./revision.ts";
 import { diffStats, StatsStore } from "./stats_store.ts";
+import { ViteBuilder } from "./vite_builder.ts";
+
+/**
+ * Create a project builder based on its package.json dependencies
+ */
+const createBuilder = async (dir: string): Promise<Builder> => {
+  const { dependencies = {}, devDependencies = {} } = JSON.parse(
+    await Deno.readTextFile(join(dir, "package.json")),
+  ) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  const deps = { ...dependencies, ...devDependencies };
+  if ("next" in deps) {
+    return new NextBuilder(dir);
+  } else if ("vite" in deps) {
+    return new ViteBuilder(dir);
+  }
+  throw new Error("Cannot determine framework, expected next or vite in package.json");
+};
 
 $.setPrintCommand(true);
 
@@ -14,10 +33,11 @@ const statsStore = new StatsStore();
 
 const revisions = await getRevisions(Deno.args[0] ?? await getPrimaryBranch());
 const worktree = await getWorktree();
-const builder = new Builder(worktree);
+let builder: Builder | null = null;
 for (const { commit } of revisions) {
   if (await statsStore.readStats(commit) === null) {
     await checkout(worktree, commit);
+    builder ??= await createBuilder(worktree);
     await statsStore.writeStats(commit, await builder.build());
   }
 }

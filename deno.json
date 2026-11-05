@@ -23,6 +23,9 @@
       "LICENSE",
       "README.md",
       "src/**/*.ts"
+    ],
+    "exclude": [
+      "src/**/*_test.ts"
     ]
   },
   "compilerOptions": {
