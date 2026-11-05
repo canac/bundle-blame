@@ -4,24 +4,23 @@ import { slidingWindows } from "@std/collections";
 import { format } from "@std/fmt/bytes";
 import { blue, green, red, yellow } from "@std/fmt/colors";
 import { Builder } from "./builder.ts";
-import { getPrimaryBranch, getRevisions, sandbox } from "./git.ts";
+import { checkout, getPrimaryBranch, getRevisions, getWorktree } from "./git.ts";
 import type { Revision } from "./revision.ts";
 import { diffStats, StatsStore } from "./stats_store.ts";
 
 $.setPrintCommand(true);
 
-const builder = new Builder();
 const statsStore = new StatsStore();
 
 const revisions = await getRevisions(Deno.args[0] ?? await getPrimaryBranch());
-await sandbox(async () => {
-  for (const { commit: commit } of revisions) {
-    if (await statsStore.readStats(commit) === null) {
-      await $`git switch ${commit} --detach`;
-      await statsStore.writeStats(commit, await builder.build());
-    }
+const worktree = await getWorktree();
+const builder = new Builder(worktree);
+for (const { commit } of revisions) {
+  if (await statsStore.readStats(commit) === null) {
+    await checkout(worktree, commit);
+    await statsStore.writeStats(commit, await builder.build());
   }
-});
+}
 
 const formatRevision = (revision: Revision): string =>
   `"${green(revision.message)}" (${yellow(revision.commit.slice(0, 7))})`;

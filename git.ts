@@ -1,5 +1,9 @@
 import { $ } from "@david/dax";
+import { encodeHex } from "@std/encoding/hex";
+import { ensureDir, exists } from "@std/fs";
+import { basename, dirname, join } from "@std/path";
 import type { Revision } from "./revision.ts";
+import { getCacheDir } from "./stats_store.ts";
 
 /**
  * Return the primary branch, either main or master
@@ -23,40 +27,25 @@ export const getRevisions = async (start: string): Promise<Revision[]> => {
   }));
 };
 
-type GitLocation = { type: "branch"; branch: string } | { type: "commit"; commit: string };
+/**
+ * Return the path to this repo's dedicated build worktree.
+ */
+export const getWorktree = async (): Promise<string> => {
+  const repoRoot = await $`git rev-parse --show-toplevel`.text();
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(repoRoot));
+  const name = `${basename(repoRoot)}-${encodeHex(digest).slice(0, 6)}`;
+  const worktree = join(getCacheDir(), "worktrees", name);
 
-const getLocation = async (): Promise<GitLocation> => {
-  const branch = await $`git branch --show-current`.text();
-  if (branch) {
-    return { type: "branch", branch } as const;
+  if (!await exists(worktree)) {
+    await ensureDir(dirname(worktree));
+    await $`git worktree add --force --detach ${worktree}`;
   }
-
-  const commit = await $`git rev-parse HEAD`.text();
-  return { type: "commit", commit } as const;
+  return worktree;
 };
 
 /**
- * Save the current git state, including the current branch or commit and any uncommitted files, execute a callback, and
- * restore the original state
+ * Check out a commit in the worktree.
  */
-export const sandbox = async (work: () => Promise<unknown>) => {
-  const location = await getLocation();
-  const stashed = (await $`git diff --quiet || git diff --cached --quiet`.noThrow()).code !== 0;
-  if (stashed) {
-    await $`git stash --include-untracked`;
-  }
-
-  try {
-    await work();
-  } finally {
-    if (location.type === "branch") {
-      await $`git switch ${location.branch}`;
-    } else {
-      await $`git switch --detach ${location.commit}`;
-    }
-
-    if (stashed) {
-      await $`git stash pop`;
-    }
-  }
+export const checkout = async (worktree: string, commit: string): Promise<void> => {
+  await $`git switch --detach --discard-changes ${commit}`.cwd(worktree);
 };

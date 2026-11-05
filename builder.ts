@@ -17,10 +17,18 @@ const gzipSize = async (file: Deno.FsFile): Promise<number> => {
 };
 
 export class Builder {
+  #dir: string;
   #packageManager: PackageManager | null = null;
 
   /**
-   * Build the Next.js project and return the build stats
+   * Create a builder for the Next.js project in `dir`
+   */
+  constructor(dir: string) {
+    this.#dir = dir;
+  }
+
+  /**
+   * Install dependencies, build the Next.js project, and return the build stats
    */
   async build(): Promise<Stats> {
     this.#packageManager ??= await this.#detectPackageManager();
@@ -28,9 +36,10 @@ export class Builder {
       throw new Error("Cannot determine package manager");
     }
 
-    await $`${this.#packageManager} build`;
+    await $`${this.#packageManager} install`.cwd(this.#dir);
+    await $`${this.#packageManager} run build`.cwd(this.#dir);
 
-    const nextDir = ".next";
+    const nextDir = join(this.#dir, ".next");
     const { pages } = JSON.parse(
       await Deno.readTextFile(
         join(nextDir, "build-manifest.json"),
@@ -64,11 +73,11 @@ export class Builder {
    * Determine the project's package manager
    */
   async #detectPackageManager(): Promise<PackageManager> {
-    if (await exists("package-lock.json")) {
+    if (await exists(join(this.#dir, "package-lock.json"))) {
       return "npm";
-    } else if (await exists("yarn.lock")) {
+    } else if (await exists(join(this.#dir, "yarn.lock"))) {
       return "yarn";
-    } else if (await exists("pnpm-lock.yaml")) {
+    } else if (await exists(join(this.#dir, "pnpm-lock.yaml"))) {
       return "pnpm";
     } else {
       return "unknown";

@@ -3,16 +3,19 @@ import { join } from "@std/path";
 
 export type Stats = Record<string, number>;
 
-export class StatsStore {
-  #cacheDir: string;
-
-  constructor() {
-    const homeDir = Deno.env.get("HOME");
-    if (!homeDir) {
-      throw new Error("$HOME environment variable is not set");
-    }
-    this.#cacheDir = join(homeDir, ".cache", "bundle-blame");
+/**
+ * Return the root directory for cached data.
+ */
+export const getCacheDir = (): string => {
+  const homeDir = Deno.env.get("HOME");
+  if (!homeDir) {
+    throw new Error("$HOME environment variable is not set");
   }
+  return join(homeDir, ".cache", "bundle-blame");
+};
+
+export class StatsStore {
+  #statsDir = join(getCacheDir(), "commits");
 
   /**
    * Read the stats file for a specific commit
@@ -20,7 +23,7 @@ export class StatsStore {
   async readStats(commit: string): Promise<Stats | null> {
     try {
       return JSON.parse(
-        await Deno.readTextFile(join(this.#cacheDir, `${commit}.json`)),
+        await Deno.readTextFile(join(this.#statsDir, `${commit}.json`)),
       );
     } catch (err) {
       if (err instanceof Deno.errors.NotFound) {
@@ -34,9 +37,9 @@ export class StatsStore {
    * Write the stats file for a specific commit
    */
   async writeStats(commit: string, stats: Stats): Promise<void> {
-    await ensureDir(this.#cacheDir);
+    await ensureDir(this.#statsDir);
     await Deno.writeTextFile(
-      join(this.#cacheDir, `${commit}.json`),
+      join(this.#statsDir, `${commit}.json`),
       JSON.stringify(stats, null, 2),
     );
   }
