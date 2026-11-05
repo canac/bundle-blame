@@ -46,9 +46,13 @@ export class StatsStore {
 }
 
 /**
- * Find any differences between two sets of stats
+ * Return the files whose size changed by more than `delta` bytes between `stats1` and `stats2`
  */
-export const diffStats = (stats1: Stats, stats2: Stats): Array<{ file: string; change: number }> =>
+export const diffStats = (
+  stats1: Stats,
+  stats2: Stats,
+  delta: number,
+): Array<{ file: string; change: number }> =>
   Array.from(new Set([...Object.keys(stats1), ...Object.keys(stats2)]))
     .map((file) => ({ file, change: (stats2[file] ?? 0) - (stats1[file] ?? 0) }))
-    .filter(({ change }) => change !== 0);
+    .filter(({ change }) => Math.abs(change) > delta);

@@ -5,6 +5,8 @@
     "jsr:@david/dax@0.43": "0.43.2",
     "jsr:@david/path@0.2": "0.2.0",
     "jsr:@david/which@~0.4.1": "0.4.1",
+    "jsr:@optique/core@^1.3.6": "1.3.6",
+    "jsr:@optique/run@^1.3.6": "1.3.6",
     "jsr:@std/assert@1": "1.0.14",
     "jsr:@std/bytes@^1.0.5": "1.0.6",
     "jsr:@std/collections@1": "1.1.3",
@@ -43,6 +45,15 @@
     },
     "@david/which@0.4.1": {
       "integrity": "896a682b111f92ab866cc70c5b4afab2f5899d2f9bde31ed00203b9c250f225e"
+    },
+    "@optique/core@1.3.6": {
+      "integrity": "7d9e21ed99695a410c2175e289da8b2476c72e75405e0a608ffd6115936080b8"
+    },
+    "@optique/run@1.3.6": {
+      "integrity": "fe81395008042292264d0f9b5ef0d452a7a3000b97849bd8f3d54bec8986c1a8",
+      "dependencies": [
+        "jsr:@optique/core"
+      ]
     },
     "@std/assert@1.0.14": {
       "integrity": "68d0d4a43b365abc927f45a9b85c639ea18a9fab96ad92281e493e4ed84abaa4",
@@ -99,6 +110,8 @@
   "workspace": {
     "dependencies": [
       "jsr:@david/dax@0.43",
+      "jsr:@optique/core@^1.3.6",
+      "jsr:@optique/run@^1.3.6",
       "jsr:@std/assert@1",
       "jsr:@std/collections@1",
       "jsr:@std/encoding@1",
