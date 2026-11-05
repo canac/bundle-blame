@@ -36,7 +36,7 @@ for (const [revision1, revision2] of slidingWindows(revisions, 2)) {
 
   const differences = diffStats(stats1, stats2);
   if (differences.length > 0) {
-    const header = `${formatRevision(revision1)} vs ${formatRevision(revision2)}:`;
+    const header = `${formatRevision(revision2)} vs ${formatRevision(revision1)}:`;
     const body = differences.map(({ file, change }) =>
       `${blue(file)}: ${change > 0 ? red("increased") : green("decreased")} by ${
         format(Math.abs(change))

@@ -19,8 +19,9 @@ export const getPrimaryBranch = async (): Promise<string> => {
  */
 export const getRevisions = async (start: string): Promise<Revision[]> => {
   const mergeBase = await $`git merge-base ${start} HEAD`.text();
-  const lines = await $`git log --oneline --no-abbrev-commit --first-parent ${mergeBase}^..HEAD`
-    .lines();
+  const lines =
+    await $`git log --format=${"%H %s"} --first-parent --reverse HEAD --not ${mergeBase}^@`
+      .lines();
   return lines.map((line): Revision => ({
     commit: line.slice(0, 40),
     message: line.slice(41),
