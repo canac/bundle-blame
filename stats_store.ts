@@ -49,7 +49,6 @@ export class StatsStore {
  * Find any differences between two sets of stats
  */
 export const diffStats = (stats1: Stats, stats2: Stats): Array<{ file: string; change: number }> =>
-  Object.entries(stats1).map(([file, size1]) => {
-    const size2 = stats2[file] ?? 0;
-    return { file, change: size2 - size1 };
-  }).filter(({ change }) => Math.abs(change) > 0);
+  Array.from(new Set([...Object.keys(stats1), ...Object.keys(stats2)]))
+    .map((file) => ({ file, change: (stats2[file] ?? 0) - (stats1[file] ?? 0) }))
+    .filter(({ change }) => change !== 0);
