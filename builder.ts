@@ -1,10 +1,20 @@
 import { $ } from "@david/dax";
 import { exists } from "@std/fs/exists";
 import { join } from "@std/path";
-import zlib from "node:zlib";
 import type { Stats } from "./stats_store.ts";
 
 export type PackageManager = "npm" | "yarn" | "pnpm" | "unknown";
+
+/**
+ * Return the gzipped size of a file in bytes.
+ */
+const gzipSize = async (file: Deno.FsFile): Promise<number> => {
+  let size = 0;
+  for await (const chunk of file.readable.pipeThrough(new CompressionStream("gzip"))) {
+    size += chunk.byteLength;
+  }
+  return size;
+};
 
 export class Builder {
   #packageManager: PackageManager | null = null;
@@ -36,8 +46,7 @@ export class Builder {
             return cachedPageSize;
           }
 
-          const pageSize = Deno.readFile(join(nextDir, file))
-            .then((contents) => zlib.gzipSync(contents).byteLength);
+          const pageSize = Deno.open(join(nextDir, file)).then(gzipSize);
           pageSizes.set(file, pageSize);
           return pageSize;
         }),
