@@ -55,4 +55,5 @@ export const diffStats = (
 ): Array<{ file: string; change: number }> =>
   Array.from(new Set([...Object.keys(stats1), ...Object.keys(stats2)]))
     .map((file) => ({ file, change: (stats2[file] ?? 0) - (stats1[file] ?? 0) }))
-    .filter(({ change }) => Math.abs(change) > delta);
+    .filter(({ change }) => Math.abs(change) > delta)
+    .sort((change1, change2) => Math.abs(change2.change) - Math.abs(change1.change));
