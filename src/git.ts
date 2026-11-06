@@ -32,7 +32,7 @@ export const getRevisions = async (start: string): Promise<Revision[]> => {
  * Return the path to this repo's dedicated build worktree.
  */
 export const getWorktree = async (): Promise<string> => {
-  const repoRoot = await $`git rev-parse --show-toplevel`.text();
+  const repoRoot = dirname(await $`git rev-parse --path-format=absolute --git-common-dir`.text());
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(repoRoot));
   const name = `${basename(repoRoot)}-${encodeHex(digest).slice(0, 6)}`;
   const worktree = join(getCacheDir(), "worktrees", name);
